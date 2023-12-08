@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Triangle</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="webglcanvas" width="500" height="500"></canvas>
+
+    <script>
+        var canvas = document.getElementById("webglcanvas");
+        var gl = canvas.getContext("webgl");
+
+        var vertexShaderSource =
+            `attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }`;
+
+        var fragmentShaderSource =
+            `precision mediump float;
+            uniform vec3 u_color;
+
+            void main() {
+                gl_FragColor = vec4(u_color, 1.0);
+            }`;
+
+        var vsh = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vsh, vertexShaderSource);
+        gl.compileShader(vsh);
+
+        var fsh = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fsh, fragmentShaderSource);
+        gl.compileShader(fsh);
+
+        var prog = gl.createProgram();
+        gl.attachShader(prog, vsh);
+        gl.attachShader(prog, fsh);
+        gl.linkProgram(prog);
+        gl.useProgram(prog);
+
+        var a_position_location = gl.getAttribLocation(prog, "a_position");
+        var u_color_location = gl.getUniformLocation(prog, "u_color");
+
+        var vertices = new Float32Array([
+           0.0,  0.5,  // Top
+           -0.5, -0.5,  // Bottom-left
+           0.5, -0.5   // Bottom-right
+
+        ]);
+
+        var vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(a_position_location, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_position_location);
+
+        var color = [1.0, 0.0, 0.0]; // Initial color (red)
+
+        gl.clearColor(1.0, 1.0, 1.0, 1.0); // White background
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform3fv(u_color_location, color);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        canvas.onmousedown = function () {
+            // Increase the size of the triangle
+            vertices = vertices.map(function (value) {
+                return value * 1.1;
+            });
+
+            // Change color randomly
+            color = [Math.random(), Math.random(), Math.random()];
+
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            gl.clearColor(1.0, 1.0, 1.0, 1.0); // White background
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.uniform3fv(u_color_location, color);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        };
+    </script>
+</body>
+</html>
